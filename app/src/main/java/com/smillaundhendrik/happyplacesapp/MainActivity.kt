@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.smillaundhendrik.happyplacesapp.screens.AddHappyPlaceScreen
 import com.smillaundhendrik.happyplacesapp.screens.HappyPlaceListScreen
 import com.smillaundhendrik.happyplacesapp.screens.PickLocationOnMapScreen
+import com.smillaundhendrik.happyplacesapp.data.HappyPlace
 
 
 class MainActivity : ComponentActivity() {
@@ -34,8 +35,15 @@ class MainActivity : ComponentActivity() {
                         tempLat = tempLat,
                         tempLon = tempLon,
                         onLocationReset = { tempLat = null; tempLon = null },
-                        onSave = { name, description, lat, lon ->
-                            happyPlaces = happyPlaces + HappyPlace(name, description, lat, lon)
+                        onSave = { name, beschreibung, bildPfad, latitude, longitude, notizen ->
+                            happyPlaces = happyPlaces + HappyPlace(
+                                name = name,
+                                beschreibung = beschreibung,
+                                bildPfad = bildPfad,
+                                latitude = latitude,
+                                longitude = longitude,
+                                notizen = notizen
+                            )
                         }
                     )
                 }
@@ -52,4 +60,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }
+
