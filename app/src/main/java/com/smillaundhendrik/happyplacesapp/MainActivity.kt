@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             // Theme immer hell (kein Dark Mode)
-            HappyPlacesAppTheme(darkTheme = false) {
+            HappyPlacesAppTheme(darkTheme = true) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     // Floating Action Button (FAB) unten rechts für "Add"
@@ -77,8 +77,9 @@ class MainActivity : ComponentActivity() {
                         }
                         // Screen: Neuen Ort anlegen
                         composable("add") {
+                            // WICHTIG: Typen explizit angeben!
                             AddHappyPlaceScreen(
-                                onSaveClick = { name, beschreibung, bildPfad, latitude, longitude, notizen ->
+                                onSaveClick = { name: String, beschreibung: String, bildPfad: String, latitude: Double, longitude: Double, notizen: String ->
                                     // Ort speichern (über ViewModel)
                                     viewModel.insert(
                                         com.smillaundhendrik.happyplacesapp.data.HappyPlace(
