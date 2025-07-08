@@ -70,4 +70,13 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.2.2")
 
     implementation("androidx.compose.material:material:1.6.7")
+
+    implementation("org.osmdroid:osmdroid-android:6.1.16")
+
+    implementation("androidx.compose.material:material:1.6.0")
+// oder deine Compose-Version
+    implementation("androidx.compose.material3:material3:1.2.0")
+// falls du Material3 nutzt
+
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 }
