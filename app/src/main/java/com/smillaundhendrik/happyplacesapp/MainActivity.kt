@@ -18,7 +18,7 @@ import androidx.compose.runtime.collectAsState
 import com.smillaundhendrik.happyplacesapp.data.HappyPlaceDatabase
 import com.smillaundhendrik.happyplacesapp.data.HappyPlaceRepository
 import com.smillaundhendrik.happyplacesapp.viewmodel.HappyPlaceViewModel
-import com.smillaundhendrik.happyplacesapp.viewmodel.HappyPlaceViewModelFactory
+import com.smillaundhendrik.happyplacesapp.viewmodel.HappyPlaceViewModelFactory // Korrekt importieren!
 import com.smillaundhendrik.happyplacesapp.screens.HappyPlaceListScreen
 import com.smillaundhendrik.happyplacesapp.screens.AddHappyPlaceScreen
 import com.smillaundhendrik.happyplacesapp.ui.theme.HappyPlacesAppTheme
@@ -34,21 +34,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // ViewModel initialisieren
+        // ViewModel initialisieren – Factory wird verwendet, damit das ViewModel das Repository kennt
         val dao = HappyPlaceDatabase.getDatabase(applicationContext).happyPlaceDao()
         val repository = HappyPlaceRepository(dao)
         val factory = HappyPlaceViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[HappyPlaceViewModel::class.java]
 
         setContent {
-            // Die aktuelle Liste aller gespeicherten Orte beobachten.
-            val happyPlaces by viewModel.allHappyPlaces.collectAsState()
+            // Die aktuelle Liste aller gespeicherten Orte beobachten (wird bei Änderung der Datenbank automatisch aktualisiert)
+            val happyPlaces by viewModel.allHappyPlaces.collectAsState(initial = emptyList())
 
             // Navigation Controller für Compose
             val navController = rememberNavController()
 
-            // Theme immer hell (kein Dark Mode)
-            HappyPlacesAppTheme(darkTheme = true) {
+            // Theme übernimmt das Systemverhalten (Dark/Light Mode)
+            HappyPlacesAppTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     // Floating Action Button (FAB) unten rechts für "Add"
@@ -66,21 +66,19 @@ class MainActivity : ComponentActivity() {
                         startDestination = "list",
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        // Screen: Liste aller Orte
+                        // Screen: Liste aller Orte, mit Delete-Callback für Swipe-to-Delete
                         composable("list") {
                             HappyPlaceListScreen(
                                 happyPlaces = happyPlaces,
-                                // Auch per Button in der Liste könnte navigiert werden (optional)
                                 onAddClick = { navController.navigate("add") },
-                                onPlaceClick = { /* TODO: Detail-Screen-Navigation */ }
+                                onPlaceClick = { /* TODO: Detail-Screen-Navigation */ },
+                                onDeleteClick = { place -> viewModel.delete(place) }
                             )
                         }
                         // Screen: Neuen Ort anlegen
                         composable("add") {
-                            // WICHTIG: Typen explizit angeben!
                             AddHappyPlaceScreen(
                                 onSaveClick = { name: String, beschreibung: String, bildPfad: String, latitude: Double, longitude: Double, notizen: String ->
-                                    // Ort speichern (über ViewModel)
                                     viewModel.insert(
                                         com.smillaundhendrik.happyplacesapp.data.HappyPlace(
                                             name = name,
@@ -91,7 +89,6 @@ class MainActivity : ComponentActivity() {
                                             notizen = notizen
                                         )
                                     )
-                                    // Nach Speichern zurück zur Liste
                                     navController.popBackStack()
                                 },
                                 onCancelClick = { navController.popBackStack() }
