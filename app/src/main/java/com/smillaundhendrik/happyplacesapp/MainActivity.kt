@@ -6,42 +6,99 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import androidx.compose.runtime.collectAsState
+import com.smillaundhendrik.happyplacesapp.data.HappyPlaceDatabase
+import com.smillaundhendrik.happyplacesapp.data.HappyPlaceRepository
+import com.smillaundhendrik.happyplacesapp.viewmodel.HappyPlaceViewModel
+import com.smillaundhendrik.happyplacesapp.viewmodel.HappyPlaceViewModelFactory
+import com.smillaundhendrik.happyplacesapp.screens.HappyPlaceListScreen
+import com.smillaundhendrik.happyplacesapp.screens.AddHappyPlaceScreen
 import com.smillaundhendrik.happyplacesapp.ui.theme.HappyPlacesAppTheme
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var viewModel: HappyPlaceViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // ViewModel initialisieren
+        val dao = HappyPlaceDatabase.getDatabase(applicationContext).happyPlaceDao()
+        val repository = HappyPlaceRepository(dao)
+        val factory = HappyPlaceViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[HappyPlaceViewModel::class.java]
+
         setContent {
-            HappyPlacesAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+            // Die aktuelle Liste aller gespeicherten Orte beobachten.
+            val happyPlaces by viewModel.allHappyPlaces.collectAsState()
+
+            // Navigation Controller für Compose
+            val navController = rememberNavController()
+
+            // Theme immer hell (kein Dark Mode)
+            HappyPlacesAppTheme(darkTheme = false) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    // Floating Action Button (FAB) unten rechts für "Add"
+                    floatingActionButton = {
+                        FloatingActionButton(
+                            onClick = { navController.navigate("add") }
+                        ) {
+                            Icon(Icons.Filled.Add, contentDescription = "Neuen Happy Place hinzufügen")
+                        }
+                    }
+                ) { innerPadding ->
+                    // Navigation Host für die Screens
+                    NavHost(
+                        navController = navController,
+                        startDestination = "list",
                         modifier = Modifier.padding(innerPadding)
-                    )
+                    ) {
+                        // Screen: Liste aller Orte
+                        composable("list") {
+                            HappyPlaceListScreen(
+                                happyPlaces = happyPlaces,
+                                // Auch per Button in der Liste könnte navigiert werden (optional)
+                                onAddClick = { navController.navigate("add") },
+                                onPlaceClick = { /* TODO: Detail-Screen-Navigation */ }
+                            )
+                        }
+                        // Screen: Neuen Ort anlegen
+                        composable("add") {
+                            AddHappyPlaceScreen(
+                                onSaveClick = { name, beschreibung, bildPfad, latitude, longitude, notizen ->
+                                    // Ort speichern (über ViewModel)
+                                    viewModel.insert(
+                                        com.smillaundhendrik.happyplacesapp.data.HappyPlace(
+                                            name = name,
+                                            beschreibung = beschreibung,
+                                            bildPfad = bildPfad,
+                                            latitude = latitude,
+                                            longitude = longitude,
+                                            notizen = notizen
+                                        )
+                                    )
+                                    // Nach Speichern zurück zur Liste
+                                    navController.popBackStack()
+                                },
+                                onCancelClick = { navController.popBackStack() }
+                            )
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HappyPlacesAppTheme {
-        Greeting("Android")
     }
 }
